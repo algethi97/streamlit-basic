@@ -10,9 +10,9 @@ venv/
 .env
 .env.local
 
-# Database
-*.db
-*.sqlite3
+# Database (chat_history.db is tracked in Git repository per requirement)
+# *.db
+# *.sqlite3
 
 # IDE
 .vscode/
@@ -20,3 +20,4 @@ venv/
 
 # Streamlit
 .streamlit/
+
