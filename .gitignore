@@ -13,6 +13,7 @@ venv/
 # Database (chat_history.db is tracked in Git repository per requirement)
 # *.db
 # *.sqlite3
+*.db-journal
 
 # IDE
 .vscode/
