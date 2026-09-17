@@ -54,11 +54,17 @@ uv run streamlit run app2.py
 ```plaintext
 streamlit-basic/
 ├── app.py              # Streamlit 기본 위젯 예제 앱
-├── app2.py             # OpenAI 멀티모달 챗봇 메인 앱 (네비게이션 엔트리포인트)
-├── app2_history.py     # 과거 채팅 내역 조회 페이지 (/history)
+├── app2.py             # OpenAI 챗봇 메인 앱 (네비게이션 엔트리포인트)
+├── modules/            # 기능별 분리 모듈
+│   ├── database.py     # SQLite DB 관리 (users, sessions, messages CRUD)
+│   ├── auth.py         # 간이 로그인/회원가입 시스템
+│   ├── api_key.py      # OpenAI API 키 모달 등록 및 상태 관리
+│   ├── app2_history.py # 과거 채팅 내역 조회 페이지 (/history)
+│   └── theme.py        # 해수면 ↔ 심해 수직 잠수 오션 테마
 ├── widgets/            # 컴포넌트별 Streamlit 위젯 예제 모듈
 ├── pyproject.toml      # uv 의존성 및 프로젝트 설정
 ├── run.bat             # 앱 실행 배치 스크립트
 ├── .env.example        # 환경 변수 템플릿
 └── README.md           # 프로젝트 문서
 ```
+
