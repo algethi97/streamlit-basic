@@ -7,11 +7,10 @@ def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
-    # 사용자 테이블
+    # 사용자 테이블 (닉네임 관리)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
-            password TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -38,7 +37,12 @@ def init_db():
         )
     """)
     
-    # 기존 DB 테이블 컬럼 호환 유지
+    # 기존 DB 테이블 컬럼 호환 유지 및 비밀번호 컬럼 삭제
+    cursor.execute("PRAGMA table_info(users)")
+    user_cols = [col[1] for col in cursor.fetchall()]
+    if "password" in user_cols:
+        cursor.execute("ALTER TABLE users DROP COLUMN password")
+
     cursor.execute("PRAGMA table_info(sessions)")
     session_cols = [col[1] for col in cursor.fetchall()]
     if "username" not in session_cols:
@@ -54,28 +58,16 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- 사용자 인증 관련 ---
-def register_user(username, password):
-    if not username.strip() or not password.strip():
-        return False, "아이디와 비밀번호를 모두 입력해 주세요."
+# --- 사용자(닉네임) 관리 관련 ---
+def get_or_create_user(username):
+    username = username.strip()
+    if not username:
+        return
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT username FROM users WHERE username = ?", (username.strip(),))
-    if cursor.fetchone():
-        conn.close()
-        return False, "이미 존재하는 아이디입니다."
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username.strip(), password.strip()))
+    cursor.execute("INSERT OR IGNORE INTO users (username) VALUES (?)", (username,))
     conn.commit()
     conn.close()
-    return True, "회원가입이 완료되었습니다. 로그인 탭에서 로그인해 주세요."
-
-def authenticate_user(username, password):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT username FROM users WHERE username = ? AND password = ?", (username.strip(), password.strip()))
-    user = cursor.fetchone()
-    conn.close()
-    return user is not None
 
 # --- 세션(대화방) 관리 관련 ---
 def get_sessions(username=None):
