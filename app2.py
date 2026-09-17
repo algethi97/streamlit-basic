@@ -23,7 +23,7 @@ load_dotenv()
 def chat_page():
     current_user = st.session_state.get("username")
 
-    # 세션 목록 조회 및 기본 세션 보장 (로그인 사용자 기준, 최대 10개)
+    # 세션 목록 조회 및 기본 세션 보장 (내부 로직)
     sessions = get_sessions(username=current_user)
     if not sessions:
         initial_id = create_session(username=current_user, title="새 대화")
@@ -34,19 +34,39 @@ def chat_page():
     if "current_session_id" not in st.session_state or not st.session_state.current_session_id:
         st.session_state.current_session_id = initial_id
 
-    # 현재 세션 ID 유효성 점검
     session_ids = [s[0] for s in sessions]
     if st.session_state.current_session_id not in session_ids:
         st.session_state.current_session_id = session_ids[0]
 
     st.title("OpenAI 채팅")
 
-    # 사이드바: 대화방 관리 (최대 10개 세션 제한)
-    st.sidebar.header("대화방 관리")
+    # ==========================================================================
+    # 7. 모델 선택 & 대화횟수
+    # ==========================================================================
+    st.sidebar.divider()
+    st.sidebar.subheader("모델 및 대화 현황")
+
+    AVAILABLE_MODELS = [
+        "gpt-5.6-luna",
+        "gpt-5.6-terra",
+        "gpt-5.6-sol",
+        "gpt-5.5",
+    ]
+    model_name = st.sidebar.selectbox("모델 선택", AVAILABLE_MODELS, index=0)
+
+    turn_count = get_turn_count(st.session_state.current_session_id)
+    st.sidebar.caption(f"💬 대화 횟수: {turn_count} / 100회")
+    st.sidebar.progress(turn_count / 100)
+
+    # ==========================================================================
+    # 8. 대화방 관리 블럭 전체
+    # ==========================================================================
+    st.sidebar.divider()
+    st.sidebar.subheader("대화방 관리")
     st.sidebar.caption(f"보유 세션: {len(sessions)} / 10개 (11번째 생성 시 가장 오래된 세션 자동 삭제)")
 
-    # 새 대화 시작 버튼 (10개 초과 시 FIFO 자동 삭제)
-    if st.sidebar.button("➕ 새로운 대화 시작"):
+    # 새 대화 시작 버튼
+    if st.sidebar.button("➕ 새로운 대화 시작", use_container_width=True):
         new_session_id = create_session(username=current_user, title="새 대화")
         st.session_state.current_session_id = new_session_id
         st.session_state.messages = []
@@ -71,7 +91,7 @@ def chat_page():
         st.rerun()
 
     # 현재 대화방 삭제 버튼
-    if st.sidebar.button("🗑️ 현재 대화방 삭제"):
+    if st.sidebar.button("🗑️ 현재 대화방 삭제", use_container_width=True):
         delete_session(st.session_state.current_session_id)
         remaining_sessions = get_sessions(username=current_user)
         if remaining_sessions:
@@ -82,28 +102,9 @@ def chat_page():
         st.session_state.loaded_session_id = st.session_state.current_session_id
         st.rerun()
 
-    st.sidebar.divider()
-
-    # 사이드바: 설정 영역 (API 키 및 모델)
-    st.sidebar.header("설정")
-    
-    # 1) API 키 관리 (modules.api_key)
-    render_api_key_sidebar()
-
-    # 2) 모델 선택
-    AVAILABLE_MODELS = [
-        "gpt-5.6-luna",
-        "gpt-5.6-terra",
-        "gpt-5.6-sol",
-        "gpt-5.5",
-    ]
-    model_name = st.sidebar.selectbox("모델 선택 (GPT 5.5+)", AVAILABLE_MODELS, index=0)
-
-    # 3) 현재 대화방 턴 수 정보 표시 (요구사항 5번: 세션당 최대 100회)
-    turn_count = get_turn_count(st.session_state.current_session_id)
-    st.sidebar.caption(f"💬 대화 횟수: {turn_count} / 100회")
-    st.sidebar.progress(turn_count / 100)
-
+    # ==========================================================================
+    # 메인 채팅 영역
+    # ==========================================================================
     # 세션 상태 메시지 동기화
     if "messages" not in st.session_state or st.session_state.get("loaded_session_id") != st.session_state.current_session_id:
         st.session_state.messages = load_messages(st.session_state.current_session_id)
@@ -161,8 +162,11 @@ def chat_page():
         save_message(st.session_state.current_session_id, "assistant", response_text)
         st.rerun()
 
+
 # --- 메인 실행부 및 멀티페이지 네비게이션 제어 ---
 init_db()
+
+# 1. 해양테마 제어 (사이드바 최상단)
 apply_theme()
 
 if "logged_in" not in st.session_state:
@@ -173,13 +177,18 @@ if "openai_api_key" not in st.session_state:
     st.session_state.openai_api_key = ""
 
 if not st.session_state.logged_in:
-    # 미로그인 상태: 로그인 페이지만 노출
-    pg = st.navigation([st.Page(login_page, title="로그인", icon="🔒")])
+    # 미접속 상태: 접속 페이지만 노출
+    pg = st.navigation([st.Page(login_page, title="접속", icon="🚀")], position="hidden")
     pg.run()
 else:
-    # 로그인 상태: 상단 유저 안내 및 로그아웃 버튼, 메인 네비게이션 노출
+    # 2. ~님 접속중
     st.sidebar.markdown(f"👤 **{st.session_state.username}**님 접속 중")
-    if st.sidebar.button("🚪 로그아웃"):
+
+    # 3. OpenAI API 키 블럭
+    render_api_key_sidebar()
+
+    # 4. 접속 종료 버튼
+    if st.sidebar.button("🚪 접속 종료", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.messages = []
@@ -187,8 +196,16 @@ else:
         st.session_state.openai_api_key = ""
         st.rerun()
 
+    st.sidebar.divider()
+
+    # 페이지 정의
     chat_page_def = st.Page(chat_page, title="OpenAI 채팅", icon="💬", default=True)
     history_page_def = st.Page("modules/app2_history.py", title="과거 채팅 내역", icon="📜", url_path="history")
 
-    pg = st.navigation([chat_page_def, history_page_def])
+    # 5. openAI 채팅 & 6. 과거 채팅 내역
+    st.sidebar.page_link(chat_page_def, label="OpenAI 채팅", icon="💬")
+    st.sidebar.page_link(history_page_def, label="과거 채팅 내역", icon="📜")
+
+    # 멀티페이지 네비게이션 실행 (기본 최상단 자동 렌더링은 position="hidden"으로 제어)
+    pg = st.navigation([chat_page_def, history_page_def], position="hidden")
     pg.run()

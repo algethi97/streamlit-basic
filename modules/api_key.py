@@ -32,10 +32,10 @@ def render_api_key_sidebar():
     st.sidebar.subheader("OpenAI API 키")
     if has_api_key():
         st.sidebar.success("✅ API 키 등록 완료")
-        if st.sidebar.button("🔑 API 키 변경/삭제"):
+        if st.sidebar.button("🔑 API 키 변경/삭제", use_container_width=True):
             api_key_dialog()
     else:
         st.sidebar.warning("⚠️ API 키 미등록")
-        if st.sidebar.button("🔑 API 키 등록"):
+        if st.sidebar.button("🔑 API 키 등록", use_container_width=True):
             api_key_dialog()
 
