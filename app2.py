@@ -1,7 +1,7 @@
 import sys
 import streamlit as st
 
-# 일반 파이썬 실행(python app3.py 또는 VS Code 재생 버튼) 시 자동으로 streamlit run 모드로 전환
+# 일반 파이썬 실행(python app2.py 또는 VS Code 재생 버튼) 시 자동으로 streamlit run 모드로 전환
 if not st.runtime.exists():
     from streamlit.web import cli as stcli
     sys.argv = ["streamlit", "run", __file__]
