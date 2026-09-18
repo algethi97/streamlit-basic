@@ -47,6 +47,9 @@ def init_db():
     session_cols = [col[1] for col in cursor.fetchall()]
     if "username" not in session_cols:
         cursor.execute("ALTER TABLE sessions ADD COLUMN username TEXT")
+    if "created_at" not in session_cols:
+        cursor.execute("ALTER TABLE sessions ADD COLUMN created_at TIMESTAMP")
+        cursor.execute("UPDATE sessions SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL")
 
     cursor.execute("PRAGMA table_info(messages)")
     columns = [col[1] for col in cursor.fetchall()]

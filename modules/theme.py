@@ -150,7 +150,8 @@ def apply_theme():
     }}
 
     [data-testid="stChatInput"] textarea {{
-        color: {main_text_color} !important;
+        color: var(--text-color) !important;
+        -webkit-text-fill-color: var(--text-color) !important;
     }}
 
     /* 4. 사이드바 글래스모피즘 */
